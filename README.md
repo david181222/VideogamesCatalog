@@ -1,148 +1,148 @@
 # VG//Catalog
 
-A tactical videogame catalog built with Next.js 15+, Supabase, and Tailwind CSS v4. Features a dark military-green aesthetic inspired by MGS3: Snake Eater. Authenticated users browse the catalog; admin users manage the full CRUD from a dedicated panel.
+Catálogo táctico de videojuegos construido con **Next.js 15+**, **Supabase** y **Tailwind CSS v4**. Estética oscura militar-verde inspirada en MGS3: Snake Eater. Los usuarios autenticados navegan el catálogo; los administradores gestionan el CRUD completo desde un panel dedicado.
 
 ---
 
-## Table of Contents
+## Tabla de Contenidos
 
-1. [Tech Stack](#tech-stack)
-2. [Project Structure](#project-structure)
-3. [Environment Variables](#environment-variables)
-4. [Running Locally](#running-locally)
-5. [Database Schema](#database-schema)
+1. [Stack Tecnológico](#stack-tecnológico)
+2. [Estructura del Proyecto](#estructura-del-proyecto)
+3. [Variables de Entorno](#variables-de-entorno)
+4. [Ejecución Local](#ejecución-local)
+5. [Esquema de Base de Datos](#esquema-de-base-de-datos)
 6. [Row-Level Security (RLS)](#row-level-security-rls)
-7. [Authentication Flow](#authentication-flow)
-8. [Route Architecture](#route-architecture)
-9. [Middleware & Route Protection](#middleware--route-protection)
-10. [Pages](#pages)
-11. [Components](#components)
+7. [Flujo de Autenticación](#flujo-de-autenticación)
+8. [Arquitectura de Rutas](#arquitectura-de-rutas)
+9. [Middleware y Protección de Rutas](#middleware-y-protección-de-rutas)
+10. [Páginas](#páginas)
+11. [Componentes](#componentes)
 12. [Server Actions](#server-actions)
-13. [Supabase Client Variants](#supabase-client-variants)
-14. [Data Flow: Catalog Query](#data-flow-catalog-query)
-15. [Design System](#design-system)
+13. [Clientes de Supabase](#clientes-de-supabase)
+14. [Flujo de Datos: Consulta del Catálogo](#flujo-de-datos-consulta-del-catálogo)
+15. [Principios de Diseño (KISS / DRY)](#principios-de-diseño-kiss--dry)
+16. [Sistema de Diseño Visual](#sistema-de-diseño-visual)
 
 ---
 
-## Tech Stack
+## Stack Tecnológico
 
-| Layer | Technology |
+| Capa | Tecnología |
 |---|---|
 | Framework | Next.js 15+ (App Router) |
-| Language | TypeScript |
-| Database / Auth | Supabase (PostgreSQL + Auth) |
-| Styling | Tailwind CSS v4 (`@theme inline`) |
-| Fonts | Geist Sans + Geist Mono (Google Fonts) |
-| State | React 19 `useActionState`, URL search params |
-| Image hosting | External URLs (Wikipedia, etc.) |
+| Lenguaje | TypeScript |
+| Base de Datos / Auth | Supabase (PostgreSQL + Auth) |
+| Estilos | Tailwind CSS v4 (`@theme inline`) |
+| Fuentes | Geist Sans + Geist Mono (Google Fonts) |
+| Estado | React 19 `useActionState`, parámetros de URL |
+| Hosting de imágenes | URLs externas (Wikipedia, etc.) |
 
 ---
 
-## Project Structure
+## Estructura del Proyecto
 
 ```
 videogames/
-├── .env.local.example          Environment variable template
-├── next.config.ts              Allows external images from any HTTPS host
-├── middleware.ts               Route guard — auth + admin checks on every request
+├── middleware.ts               Guardia de rutas — verifica auth + admin en cada request
 │
 ├── lib/
-│   ├── types.ts                Shared TypeScript types (Profile, Videojuego, etc.)
+│   ├── types.ts                Tipos TypeScript compartidos (Profile, Videojuego, etc.)
+│   ├── queries.ts              Consultas reutilizables (filtros, ordenamiento, paginación)
 │   └── supabase/
-│       ├── client.ts           Browser-side Supabase client (Client Components)
-│       ├── server.ts           Server-side Supabase client (Server Components, Actions)
-│       └── middleware.ts       Middleware-specific Supabase client (Edge Runtime)
+│       ├── client.ts           Cliente Supabase para el navegador (Client Components)
+│       ├── server.ts           Cliente Supabase para el servidor (Server Components, Actions)
+│       └── middleware.ts       Cliente Supabase para middleware (Edge Runtime)
 │
 ├── components/
-│   ├── navbar.tsx              Sticky top navigation with admin link (conditional)
-│   ├── videogame-card.tsx      Grid card: cover image, title, year, score, pills
-│   ├── search-bar.tsx          Controlled text input that writes `q` to URL
-│   ├── filter-bar.tsx          Genre / platform / year / sort dropdowns → URL params
-│   ├── pagination.tsx          Prev / Next page buttons → URL param `page`
-│   ├── videogame-form.tsx      Create + edit form with developer toggle
-│   └── delete-button.tsx       Delete button with browser confirm dialog
+│   ├── navbar.tsx              Barra de navegación fija con enlace Admin (condicional)
+│   ├── videogame-card.tsx      Tarjeta: portada, título, año, puntuación, etiquetas
+│   ├── search-bar.tsx          Input de búsqueda → escribe `q` en la URL
+│   ├── filter-bar.tsx          Dropdowns de género / plataforma / año / orden → URL params
+│   ├── pagination.tsx          Botones Anterior / Siguiente → param `page` en URL
+│   ├── videogame-form.tsx      Formulario compartido de crear y editar
+│   └── delete-button.tsx       Botón eliminar con diálogo de confirmación
 │
 └── app/
-    ├── globals.css             Tailwind v4 theme tokens + scanline / grid CSS effects
-    ├── layout.tsx              Root layout: fonts, metadata, lang="es"
-    ├── not-found.tsx           Custom 404 page
-    ├── error.tsx               Global error boundary with "Try Again" button
-    ├── actions.ts              All Server Actions (auth + CRUD)
+    ├── globals.css             Tokens del tema Tailwind v4 + efectos CSS (grid, scanlines)
+    ├── layout.tsx              Layout raíz: fuentes, metadata, lang="es"
+    ├── not-found.tsx           Página 404 personalizada
+    ├── error.tsx               Límite de error global con botón "Reintentar"
+    ├── actions.ts              Todas las Server Actions (auth + CRUD)
     │
-    ├── (auth)/                 Route group — no Navbar, centered layout
-    │   ├── layout.tsx          Centered card layout with grid-pattern background
+    ├── (auth)/                 Grupo de rutas — sin Navbar, layout centrado
+    │   ├── layout.tsx          Layout centrado con fondo grid-pattern
     │   ├── login/
-    │   │   ├── page.tsx        Login page shell
-    │   │   └── login-form.tsx  Login form Client Component (useActionState)
+    │   │   ├── page.tsx        Página de login
+    │   │   └── login-form.tsx  Formulario de login (Client Component, useActionState)
     │   └── register/
-    │       ├── page.tsx        Register page shell
-    │       └── register-form.tsx Register form Client Component (useActionState)
+    │       ├── page.tsx        Página de registro
+    │       └── register-form.tsx  Formulario de registro (Client Component)
     │
-    ├── (catalog)/              Route group — with Navbar, isAdmin computed server-side
-    │   ├── layout.tsx          Reads user + profile, passes isAdmin to Navbar
-    │   ├── page.tsx            Public catalog (search, filters, 12/page grid)
-    │   └── loading.tsx         Skeleton card grid while page streams
+    ├── (catalog)/              Grupo de rutas — con Navbar
+    │   ├── layout.tsx          Lee usuario + perfil, pasa isAdmin al Navbar
+    │   ├── page.tsx            Catálogo público (búsqueda, filtros, orden, 12/página)
+    │   └── loading.tsx         Skeleton de carga mientras la página se renderiza
     │
-    └── admin/                  Requires role = 'admin' (enforced by middleware)
-        ├── layout.tsx          Navbar with isAdmin=true (middleware already verified)
-        ├── page.tsx            Admin table with search, filters, sort, pagination
-        ├── loading.tsx         Loading state for admin list
+    └── admin/                  Requiere role = 'admin' (verificado por middleware)
+        ├── layout.tsx          Navbar con isAdmin=true
+        ├── page.tsx            Tabla admin (búsqueda, filtros, orden, 20/página)
+        ├── loading.tsx         Estado de carga
         ├── create/
-        │   └── page.tsx        Fetches options, renders VideogameForm (create mode)
+        │   └── page.tsx        Carga opciones, renderiza VideogameForm (modo crear)
         └── edit/
             └── [id]/
-                └── page.tsx    Fetches game + options, renders VideogameForm (edit mode)
+                └── page.tsx    Carga juego + opciones, renderiza VideogameForm (modo editar)
 ```
 
 ---
 
-## Environment Variables
+## Variables de Entorno
 
-Create a `.env.local` file at the root of `videogames/`:
+Crea un archivo `.env.local` en la raíz del proyecto:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-clave-anon
 ```
 
-Both variables are prefixed `NEXT_PUBLIC_` so they are available in the browser (required for the browser Supabase client used in Client Components). They are also read server-side by the server and middleware clients.
+Ambas variables tienen el prefijo `NEXT_PUBLIC_` para que estén disponibles en el navegador (necesarias para el cliente Supabase en Client Components). También se leen del lado del servidor.
 
-The anonymous key is safe to expose to the browser because access is controlled by Row-Level Security policies on the database.
+La clave anónima es segura de exponer al navegador porque el acceso está controlado por las políticas RLS en la base de datos.
 
 ---
 
-## Running Locally
+## Ejecución Local
 
 ```bash
-# Install dependencies
+# Instalar dependencias
 npm install
 
-# Start the dev server
+# Iniciar servidor de desarrollo
 npm run dev
 
-# Build for production
+# Construir para producción
 npm run build
 ```
 
-The app runs at `http://localhost:3000`.
+La app corre en `http://localhost:3000`.
 
-You must configure Supabase (see [Database Schema](#database-schema) and [RLS](#row-level-security-rls)) before the app can load or authenticate users.
+Se debe configurar Supabase (ver [Esquema de BD](#esquema-de-base-de-datos) y [RLS](#row-level-security-rls)) antes de que la app pueda cargar o autenticar usuarios.
 
 ---
 
-## Database Schema
+## Esquema de Base de Datos
 
-All tables live in the `public` schema of your Supabase project.
+Todas las tablas viven en el esquema `public` del proyecto Supabase.
 
 ### `profiles`
-Extends Supabase's built-in `auth.users`. Created automatically via a database trigger when a user signs up.
+Extiende la tabla `auth.users` de Supabase. Se crea automáticamente mediante un trigger cuando un usuario se registra.
 
-| Column | Type | Notes |
+| Columna | Tipo | Notas |
 |---|---|---|
-| `id` | `uuid` (PK) | References `auth.users.id` |
-| `role` | `text` | `'user'` or `'admin'` |
+| `id` | `uuid` (PK) | Referencia a `auth.users.id` |
+| `role` | `text` | `'user'` o `'admin'` |
 
-**Trigger to auto-create profile on sign-up:**
+**Trigger para crear perfil automáticamente al registrarse:**
 ```sql
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -158,17 +158,17 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 ```
 
-**Promote a user to admin** (run in Supabase SQL Editor):
+**Promover un usuario a admin** (ejecutar en el SQL Editor de Supabase):
 ```sql
-UPDATE public.profiles SET role = 'admin' WHERE id = '<user-uuid>';
+UPDATE public.profiles SET role = 'admin' WHERE id = '<uuid-del-usuario>';
 ```
 
 ---
 
 ### `desarrolladores`
-Videogame developers/publishers.
+Desarrolladores/publicadores de videojuegos.
 
-| Column | Type |
+| Columna | Tipo |
 |---|---|
 | `id` | `serial` (PK) |
 | `nombre` | `text` |
@@ -176,9 +176,9 @@ Videogame developers/publishers.
 ---
 
 ### `generos`
-Genres (e.g., Action, RPG, Puzzle).
+Géneros (ej: Acción, RPG, Puzzle).
 
-| Column | Type |
+| Columna | Tipo |
 |---|---|
 | `id` | `serial` (PK) |
 | `nombre` | `text` |
@@ -186,9 +186,9 @@ Genres (e.g., Action, RPG, Puzzle).
 ---
 
 ### `plataformas`
-Platforms (e.g., PC, PS5, Switch).
+Plataformas (ej: PC, PS5, Switch).
 
-| Column | Type |
+| Columna | Tipo |
 |---|---|
 | `id` | `serial` (PK) |
 | `nombre` | `text` |
@@ -196,23 +196,23 @@ Platforms (e.g., PC, PS5, Switch).
 ---
 
 ### `videojuegos`
-Main game records.
+Registros principales de juegos.
 
-| Column | Type | Notes |
+| Columna | Tipo | Notas |
 |---|---|---|
 | `id` | `serial` (PK) | |
-| `titulo` | `text` | Required |
-| `anio` | `integer` | Release year |
-| `puntuacion` | `integer` | 0–100, nullable |
-| `imagen_url` | `text` | External cover image URL, nullable |
-| `desarrollador_id` | `integer` | FK → `desarrolladores.id`, nullable |
+| `titulo` | `text` | Obligatorio |
+| `anio` | `integer` | Año de lanzamiento |
+| `puntuacion` | `integer` | 0–100, puede ser nulo |
+| `imagen_url` | `text` | URL externa de portada, puede ser nulo |
+| `desarrollador_id` | `integer` | FK → `desarrolladores.id`, puede ser nulo |
 
 ---
 
 ### `videojuegos_generos`
-Junction table linking games to genres (many-to-many).
+Tabla de unión entre juegos y géneros (muchos a muchos).
 
-| Column | Type |
+| Columna | Tipo |
 |---|---|
 | `videojuego_id` | `integer` (FK → `videojuegos.id`) |
 | `genero_id` | `integer` (FK → `generos.id`) |
@@ -220,23 +220,23 @@ Junction table linking games to genres (many-to-many).
 ---
 
 ### `videojuegos_plataformas`
-Junction table linking games to platforms (many-to-many).
+Tabla de unión entre juegos y plataformas (muchos a muchos).
 
-| Column | Type |
+| Columna | Tipo |
 |---|---|
 | `videojuego_id` | `integer` (FK → `videojuegos.id`) |
 | `plataforma_id` | `integer` (FK → `plataformas.id`) |
 
 ---
 
-### Entity Relationships
+### Relaciones entre Entidades
 
 ```
 auth.users  ──(trigger)──>  profiles
                                 │ role
 
 videojuegos ───────────────> desarrolladores
-     │                       (many-to-one)
+     │                       (muchos a uno)
      ├──> videojuegos_generos ──> generos
      │         (N:M)
      └──> videojuegos_plataformas ──> plataformas
@@ -247,17 +247,17 @@ videojuegos ───────────────> desarrolladores
 
 ## Row-Level Security (RLS)
 
-RLS is enabled on all tables. Run the following SQL in the Supabase SQL Editor.
+RLS está habilitado en todas las tablas. Ejecuta el siguiente SQL en el SQL Editor de Supabase.
 
 ### `profiles`
 ```sql
--- Users can read their own profile
+-- Los usuarios pueden leer su propio perfil
 CREATE POLICY "users_read_own_profile" ON public.profiles
   FOR SELECT TO authenticated
   USING (id = auth.uid());
 ```
 
-### Read policies (all authenticated users)
+### Políticas de lectura (todos los usuarios autenticados)
 ```sql
 CREATE POLICY "authenticated_read" ON public.videojuegos
   FOR SELECT TO authenticated USING (true);
@@ -278,9 +278,9 @@ CREATE POLICY "authenticated_read" ON public.videojuegos_plataformas
   FOR SELECT TO authenticated USING (true);
 ```
 
-### Admin write policies
+### Políticas de escritura para admin
 
-The `EXISTS` subquery reads `profiles` to verify the `admin` role:
+El subquery `EXISTS` lee `profiles` para verificar el rol `admin`:
 
 ```sql
 -- videojuegos
@@ -330,349 +330,367 @@ CREATE POLICY "admin_delete_vp" ON public.videojuegos_plataformas
 
 ---
 
-## Authentication Flow
+## Flujo de Autenticación
 
-1. **Sign up** — user submits `/register`. The `register` Server Action calls `supabase.auth.signUp`. Supabase creates a row in `auth.users`, and the database trigger automatically inserts a row in `public.profiles` with `role = 'user'`. The user is redirected to `/`.
+1. **Registro** — El usuario envía `/register`. La Server Action `register` llama a `supabase.auth.signUp`. Supabase crea una fila en `auth.users`, y el trigger inserta automáticamente una fila en `public.profiles` con `role = 'user'`. Se redirige a `/`.
 
-2. **Sign in** — user submits `/login`. The `login` Server Action calls `supabase.auth.signInWithPassword`. On success, Supabase writes a session cookie and the user is redirected to `/`.
+2. **Inicio de sesión** — El usuario envía `/login`. La Server Action `login` llama a `supabase.auth.signInWithPassword`. Al tener éxito, Supabase escribe una cookie de sesión y se redirige a `/`.
 
-3. **Session refresh** — `lib/supabase/middleware.ts` calls `supabase.auth.getUser()` on every request. This validates the JWT against the Supabase Auth server and refreshes the session cookie if needed, ensuring it never goes stale.
+3. **Renovación de sesión** — `lib/supabase/middleware.ts` llama a `supabase.auth.getUser()` en cada request. Esto valida el JWT contra el servidor de Supabase Auth y renueva la cookie si es necesario.
 
-4. **Sign out** — the Navbar has a form that invokes the `signOut` Server Action. That calls `supabase.auth.signOut()`, which clears the session cookie and redirects to `/login`.
+4. **Cierre de sesión** — El Navbar tiene un formulario que invoca la Server Action `signOut`. Llama a `supabase.auth.signOut()`, limpia la cookie y redirige a `/login`.
 
-5. **Role check** — `profiles.role` is the single source of truth. It is checked in middleware (`/admin/*` protection), in layouts (`isAdmin` prop for Navbar), and in every write Server Action (`verifyAdmin` helper).
+5. **Verificación de rol** — `profiles.role` es la única fuente de verdad. Se verifica en el middleware (protección de `/admin/*`), en los layouts (prop `isAdmin` para el Navbar) y en cada Server Action de escritura (helper `verifyAdmin`).
 
 ---
 
-## Route Architecture
+## Arquitectura de Rutas
 
-Next.js **Route Groups** (folders in parentheses) organize pages without affecting URLs:
+Los **Route Groups** de Next.js (carpetas en paréntesis) organizan páginas sin afectar las URLs:
 
-| Route Group | URL prefix | Layout |
+| Grupo de Rutas | Prefijo URL | Layout |
 |---|---|---|
-| `(auth)` | `/login`, `/register` | Centered card, no Navbar |
-| `(catalog)` | `/` (index) | Navbar, `isAdmin` computed from DB |
-| `admin` (plain folder) | `/admin/**` | Navbar with `isAdmin=true` (middleware already verified) |
+| `(auth)` | `/login`, `/register` | Tarjeta centrada, sin Navbar |
+| `(catalog)` | `/` (índice) | Navbar, `isAdmin` calculado desde la BD |
+| `admin` (carpeta normal) | `/admin/**` | Navbar con `isAdmin=true` (middleware ya verificó) |
 
-The catalog layout fetches the user's role to conditionally show the "Admin" nav link, while the admin layout can skip that check — the middleware already verified the role before the request reached the page.
+El layout del catálogo consulta el rol del usuario para mostrar condicionalmente el enlace "Admin", mientras que el layout de admin puede saltarse esa verificación — el middleware ya validó el rol antes de que el request llegara a la página.
 
 ---
 
-## Middleware & Route Protection
+## Middleware y Protección de Rutas
 
-`middleware.ts` runs on every request matching this pattern:
+`middleware.ts` se ejecuta en cada request que coincida con este patrón:
 ```
 /((?!_next/static|_next/image|favicon.ico|.*\.(svg|png|jpg|jpeg|gif|webp)$).*)
 ```
 
-Three rules are applied in order:
+Se aplican tres reglas en orden:
 
 ```
 Request
   │
-  ├─ Not authenticated + route ≠ /login or /register
-  │     → redirect /login
+  ├─ No autenticado + ruta ≠ /login o /register
+  │     → redirigir a /login
   │
-  ├─ Authenticated + route = /login or /register
-  │     → redirect /
+  ├─ Autenticado + ruta = /login o /register
+  │     → redirigir a /
   │
-  └─ Route starts with /admin
-        + role ≠ 'admin' (queried from profiles)
-        → redirect /
+  └─ Ruta empieza con /admin
+        + role ≠ 'admin' (consultado desde profiles)
+        → redirigir a /
 ```
 
-The middleware uses a dedicated Supabase client (`lib/supabase/middleware.ts`) that reads cookies from the incoming `NextRequest` and writes them back to the `NextResponse`, ensuring the session is fresh before the route handler runs.
+El middleware usa un cliente Supabase dedicado (`lib/supabase/middleware.ts`) que lee cookies del `NextRequest` entrante y las escribe de vuelta en el `NextResponse`, asegurando que la sesión esté fresca antes de que se ejecute el handler de la ruta.
 
-**Why `getUser()` instead of `getSession()`?** `getSession()` only reads the local cookie without validating it against the Supabase server. `getUser()` makes a network request to validate the JWT — this prevents forged or expired tokens from passing the middleware check.
-
----
-
-## Pages
-
-### `/login` — Login
-Renders `LoginForm` inside a centered card. `LoginForm` is a Client Component that uses `useActionState` with the `login` Server Action.
-
-### `/register` — Register
-Renders `RegisterForm` inside a centered card. Same pattern as login.
-
-### `/` — Public Catalog (`app/(catalog)/page.tsx`)
-A Server Component that:
-1. Awaits `searchParams` (Promise in Next.js 15+)
-2. Fetches genre / platform / year options in parallel
-3. Runs the two-query junction filter for genre and platform (see [Data Flow](#data-flow-catalog-query))
-4. Runs the main `videojuegos` query with search, year filter, default `ORDER BY titulo`
-5. Paginates at **12 results per page**
-6. Renders `SearchBar`, `FilterBar` (no sort dropdown), a responsive card grid, and `Pagination`
-
-### `/admin` — Admin Panel (`app/admin/page.tsx`)
-Same data flow as the catalog but:
-- **20 results per page**
-- `FilterBar` rendered with `showSort` prop — sorts by title, score, or year
-- Renders a `<table>` instead of a card grid
-- Each row has an Edit link and a `DeleteButton`
-
-### `/admin/create` — Create Game
-Fetches all developers, genres, and platforms in parallel, then renders `VideogameForm` with the `createVideojuego` action and no `defaultValues`.
-
-### `/admin/edit/[id]` — Edit Game
-Awaits the dynamic `params.id` (Promise in Next.js 15+). Fetches the existing game (with all relations) + option lists in parallel. Renders `VideogameForm` with `defaultValues` pre-populated and the `updateVideojuego` action. Calls `notFound()` if the ID does not exist.
+**¿Por qué `getUser()` en lugar de `getSession()`?** `getSession()` solo lee la cookie local sin validarla contra el servidor de Supabase. `getUser()` hace una petición de red para validar el JWT — esto previene que tokens falsificados o expirados pasen la verificación del middleware.
 
 ---
 
-## Components
+## Páginas
+
+### `/login` — Inicio de Sesión
+Renderiza `LoginForm` dentro de una tarjeta centrada. `LoginForm` es un Client Component que usa `useActionState` con la Server Action `login`.
+
+### `/register` — Registro
+Renderiza `RegisterForm` dentro de una tarjeta centrada. Mismo patrón que login.
+
+### `/` — Catálogo Público (`app/(catalog)/page.tsx`)
+Server Component que:
+1. Espera `searchParams` (Promise en Next.js 15+)
+2. Consulta opciones de género / plataforma / año en paralelo (`fetchFilterOptions`)
+3. Ejecuta la consulta principal con filtros, búsqueda, ordenamiento y paginación (`fetchVideojuegos`)
+4. Pagina a **12 resultados por página**
+5. Renderiza `SearchBar`, `FilterBar` (con dropdown de orden), grid responsiva de tarjetas y `Pagination`
+
+### `/admin` — Panel de Administración (`app/admin/page.tsx`)
+Mismo flujo de datos que el catálogo, usando los mismos helpers de `lib/queries.ts`, pero:
+- **20 resultados por página**
+- Renderiza una `<table>` en vez de la cuadrícula de tarjetas
+- Cada fila tiene un enlace de Editar y un `DeleteButton`
+
+### `/admin/create` — Crear Juego
+Consulta todos los desarrolladores, géneros y plataformas en paralelo, luego renderiza `VideogameForm` con la acción `createVideojuego` y sin `defaultValues`.
+
+### `/admin/edit/[id]` — Editar Juego
+Espera el `params.id` dinámico (Promise en Next.js 15+). Consulta el juego existente (con todas las relaciones) + listas de opciones en paralelo. Renderiza `VideogameForm` con `defaultValues` prellenados y la acción `updateVideojuego`. Llama a `notFound()` si el ID no existe.
+
+---
+
+## Componentes
 
 ### `Navbar` (`components/navbar.tsx`)
 
-Sticky top bar. The "Admin" link is only rendered when `isAdmin === true`. Sign Out is implemented as a form that directly invokes the `signOut` Server Action.
+Barra superior fija. El enlace "Admin" solo se renderiza cuando `isAdmin === true`. El cierre de sesión se implementa como un formulario que invoca directamente la Server Action `signOut`.
 
-| Prop | Type | Description |
+| Prop | Tipo | Descripción |
 |---|---|---|
-| `userEmail` | `string \| null` | Displays the current user's email |
-| `isAdmin` | `boolean` | Controls visibility of the Admin nav link |
+| `userEmail` | `string \| null` | Muestra el email del usuario actual |
+| `isAdmin` | `boolean` | Controla la visibilidad del enlace Admin |
 
 ---
 
 ### `VideogameCard` (`components/videogame-card.tsx`)
 
-Displays a single game in the catalog grid.
+Muestra un juego individual en la cuadrícula del catálogo.
 
-| Prop | Type | Description |
+| Prop | Tipo | Descripción |
 |---|---|---|
-| `videojuego` | `Videojuego` | Full game record with nested relations |
+| `videojuego` | `Videojuego` | Registro completo del juego con relaciones anidadas |
 
-**Score color thresholds:**
-- `≥ 75` — green (`text-accent`) with glow
-- `≥ 50` — amber (`text-warning`)
-- `< 50` — red (`text-danger`)
-- `null` — displays "N/A"
+**Umbrales de color para puntuación:**
+- `≥ 75` — verde (`text-accent`) con resplandor
+- `≥ 50` — ámbar (`text-warning`)
+- `< 50` — rojo (`text-danger`)
+- `null` — muestra "N/A"
 
-Genres and platforms are unwrapped from the junction table arrays (`videojuegos_generos[].generos`) and rendered as small pills below the game info.
+Los géneros y plataformas se extraen de los arrays de las tablas de unión (`videojuegos_generos[].generos`) y se renderizan como etiquetas pequeñas debajo de la información del juego.
 
 ---
 
 ### `SearchBar` (`components/search-bar.tsx`)
 
-Client Component. Controlled input that mirrors the current `q` URL param as local state.
+Client Component. Input controlado que refleja el parámetro URL `q` actual como estado local.
 
-On submit, updates the `q` query param (or removes it if empty) and resets `page` to 1. No props — reads and writes URL params internally via `useSearchParams` and `useRouter`.
+Al enviar, actualiza el parámetro `q` (o lo elimina si está vacío) y reinicia `page` a 1. No recibe props — lee y escribe parámetros URL internamente vía `useSearchParams` y `useRouter`.
 
 ---
 
 ### `FilterBar` (`components/filter-bar.tsx`)
 
-Client Component. Three always-visible dropdowns (genre, platform, year) plus an optional sort dropdown.
+Client Component. Tres dropdowns siempre visibles (género, plataforma, año) más un dropdown de ordenamiento opcional.
 
-| Prop | Type | Default | Description |
+| Prop | Tipo | Default | Descripción |
 |---|---|---|---|
-| `generos` | `Genero[]` | — | Options for the genre select |
-| `plataformas` | `Plataforma[]` | — | Options for the platform select |
-| `anios` | `number[]` | — | Options for the year select |
-| `showSort` | `boolean` | `false` | Enables the sort dropdown (admin only) |
+| `generos` | `Genero[]` | — | Opciones para el select de género |
+| `plataformas` | `Plataforma[]` | — | Opciones para el select de plataforma |
+| `anios` | `number[]` | — | Opciones para el select de año |
+| `showSort` | `boolean` | `false` | Habilita el dropdown de ordenamiento |
 
-Every change immediately calls `router.push(...)` with the updated URL params. Changing any filter resets `page` to 1. A **Clear** button appears when any filter is active; it navigates to the pathname with no query string.
+Cada cambio llama inmediatamente a `router.push(...)` con los parámetros URL actualizados. Cambiar cualquier filtro reinicia `page` a 1. Un botón **Clear** aparece cuando algún filtro está activo; navega al pathname sin query string.
 
-**Sort values** (passed as `?sort=`):
+**Valores de ordenamiento** (pasados como `?sort=`):
 
-| Value | Meaning |
+| Valor | Significado |
 |---|---|
-| *(empty)* | Alphabetical A → Z (default) |
-| `titulo_desc` | Alphabetical Z → A |
-| `puntuacion_desc` | Score highest first |
-| `puntuacion_asc` | Score lowest first |
-| `anio_desc` | Newest first |
-| `anio_asc` | Oldest first |
+| *(vacío)* | Alfabético A → Z (por defecto) |
+| `titulo_desc` | Alfabético Z → A |
+| `puntuacion_desc` | Puntuación más alta primero |
+| `puntuacion_asc` | Puntuación más baja primero |
+| `anio_desc` | Más recientes primero |
+| `anio_asc` | Más antiguos primero |
 
 ---
 
 ### `Pagination` (`components/pagination.tsx`)
 
-Client Component. Renders **Prev** / **Next** buttons. Returns `null` when `totalPages <= 1`.
+Client Component. Renderiza botones **Anterior** / **Siguiente**. Retorna `null` cuando `totalPages <= 1`.
 
-| Prop | Type | Description |
+| Prop | Tipo | Descripción |
 |---|---|---|
-| `currentPage` | `number` | Current page (1-indexed) |
-| `totalPages` | `number` | Total number of pages |
+| `currentPage` | `number` | Página actual (empieza en 1) |
+| `totalPages` | `number` | Número total de páginas |
 
-Preserves all existing URL params (filters, search, sort) and only updates `page`.
+Preserva todos los parámetros URL existentes (filtros, búsqueda, orden) y solo actualiza `page`.
 
 ---
 
 ### `VideogameForm` (`components/videogame-form.tsx`)
 
-Client Component. Shared create/edit form used in both `/admin/create` and `/admin/edit/[id]`.
+Client Component. Formulario compartido de crear/editar usado en `/admin/create` y `/admin/edit/[id]`.
 
-| Prop | Type | Description |
+| Prop | Tipo | Descripción |
 |---|---|---|
-| `desarrolladores` | `Desarrollador[]` | Options for the developer select |
-| `generos` | `Genero[]` | Options for genre checkboxes |
-| `plataformas` | `Plataforma[]` | Options for platform checkboxes |
-| `defaultValues` | `Videojuego` (optional) | When provided, the form is in edit mode |
-| `action` | Server Action | `createVideojuego` or `updateVideojuego` |
+| `desarrolladores` | `Desarrollador[]` | Opciones para el select de desarrollador |
+| `generos` | `Genero[]` | Opciones para los checkboxes de género |
+| `plataformas` | `Plataforma[]` | Opciones para los checkboxes de plataforma |
+| `defaultValues` | `Videojuego` (opcional) | Cuando se proporciona, el formulario está en modo edición |
+| `action` | Server Action | `createVideojuego` o `updateVideojuego` |
 
-Uses `useActionState(action, { error: null })` from React 19. The `pending` boolean disables the submit button while the action runs.
+Usa `useActionState(action, { error: null })` de React 19. El booleano `pending` deshabilita el botón de envío mientras la acción se ejecuta.
 
-**Developer field toggle:**
-A `devMode` state controls what field is rendered:
-- `'select'` — `<select name="desarrollador_id">` with existing developers
-- `'new'` — `<input name="new_desarrollador">` to type a new developer name
+**Toggle del campo desarrollador:**
+Un estado `devMode` controla qué campo se renderiza:
+- `'select'` — `<select name="desarrollador_id">` con desarrolladores existentes
+- `'new'` — `<input name="new_desarrollador">` para escribir un nombre nuevo
 
-The Server Action reads `new_desarrollador` first. If present, it inserts to `desarrolladores` and uses the returned ID; otherwise it parses `desarrollador_id`.
+La Server Action lee `new_desarrollador` primero. Si está presente, inserta en `desarrolladores` y usa el ID retornado; de lo contrario parsea `desarrollador_id`.
 
-**Edit mode:** When `defaultValues` is supplied, a hidden `<input name="id">` is added and all fields are pre-populated. The submit button reads "Update Videogame" instead of "Create Videogame".
+**Modo edición:** Cuando se proporciona `defaultValues`, se agrega un `<input name="id">` oculto y todos los campos se prellenan. El botón de envío dice "Update Videogame" en vez de "Create Videogame".
 
 ---
 
 ### `DeleteButton` (`components/delete-button.tsx`)
 
-Client Component. Wraps the delete form to show a confirmation dialog before submitting, and to display any error returned by the action.
+Client Component. Envuelve el formulario de eliminación para mostrar un diálogo de confirmación antes de enviar y mostrar cualquier error retornado por la acción.
 
-| Prop | Type | Description |
+| Prop | Tipo | Descripción |
 |---|---|---|
-| `videojuegoId` | `number` | ID of the game to delete |
-| `titulo` | `string` | Used in the `window.confirm` message |
+| `videojuegoId` | `number` | ID del juego a eliminar |
+| `titulo` | `string` | Se usa en el mensaje de `window.confirm` |
 
-A client wrapper is required because `deleteVideojuego` returns `{ error }` instead of `void`, which is incompatible with the native `form action` attribute type.
+Se necesita un wrapper de cliente porque `deleteVideojuego` retorna `{ error }` en vez de `void`, lo cual es incompatible con el tipo del atributo nativo `form action`.
 
 ---
 
 ## Server Actions
 
-All actions are in `app/actions.ts` and marked `'use server'`.
+Todas las acciones están en `app/actions.ts` y marcadas con `'use server'`.
 
 ### `login(prevState, formData) → AuthState`
-Calls `supabase.auth.signInWithPassword`. Redirects to `/` on success, returns `{ error }` on failure.
+Llama a `supabase.auth.signInWithPassword`. Redirige a `/` si es exitoso, retorna `{ error }` si falla.
 
 ### `register(prevState, formData) → AuthState`
-Calls `supabase.auth.signUp`. Redirects to `/` on success, returns `{ error }` on failure.
+Llama a `supabase.auth.signUp`. Redirige a `/` si es exitoso, retorna `{ error }` si falla.
 
 ### `signOut() → void`
-Calls `supabase.auth.signOut()` and redirects to `/login`.
+Llama a `supabase.auth.signOut()` y redirige a `/login`.
 
-### `verifyAdmin()` — internal helper
-Called at the start of every CRUD action. Gets the current user via `getUser()` and reads their role from `public.profiles`. Returns `{ supabase, error: null }` if authorized, or `{ supabase, error: string }` if not.
+### `verifyAdmin()` — helper interno
+Se llama al inicio de cada acción CRUD. Obtiene el usuario actual vía `getUser()` y lee su rol desde `public.profiles`. Retorna `{ supabase, error: null }` si está autorizado, o `{ supabase, error: string }` si no lo está.
 
 ### `createVideojuego(prevState, formData) → FormState`
-1. Verifies admin role
-2. Reads: `titulo`, `anio`, `puntuacion`, `imagen_url`, `desarrollador_id`, `new_desarrollador`, `generos[]`, `plataformas[]`
-3. If `new_desarrollador` is present → insert new developer, use its ID
-4. Insert game into `videojuegos`
-5. Insert rows into `videojuegos_generos` and `videojuegos_plataformas`
-6. `revalidatePath('/')` + `revalidatePath('/admin')` to bust Next.js cache
-7. Redirect to `/admin`
+1. Verifica rol admin
+2. Lee: `titulo`, `anio`, `puntuacion`, `imagen_url`, `desarrollador_id`, `new_desarrollador`, `generos[]`, `plataformas[]`
+3. Si `new_desarrollador` está presente → inserta nuevo desarrollador, usa su ID
+4. Inserta juego en `videojuegos`
+5. Inserta filas en `videojuegos_generos` y `videojuegos_plataformas`
+6. `revalidatePath('/')` + `revalidatePath('/admin')` para limpiar caché de Next.js
+7. Redirige a `/admin`
 
 ### `updateVideojuego(prevState, formData) → FormState`
-Same flow as create, with two differences:
-- Reads `id` from a hidden form field; calls `.update()` instead of `.insert()`
-- **Replaces** junction relations: deletes all existing genre/platform rows, then re-inserts the new selection
+Mismo flujo que crear, con dos diferencias:
+- Lee `id` desde un campo oculto del formulario; llama `.update()` en vez de `.insert()`
+- **Reemplaza** las relaciones de unión: elimina todas las filas existentes de género/plataforma, luego reinserta la nueva selección
 
 ### `deleteVideojuego(formData) → { error } | void`
-1. Verifies admin role
-2. Deletes all `videojuegos_generos` rows for the game
-3. Deletes all `videojuegos_plataformas` rows for the game
-4. Deletes the game from `videojuegos`
+1. Verifica rol admin
+2. Elimina todas las filas de `videojuegos_generos` del juego
+3. Elimina todas las filas de `videojuegos_plataformas` del juego
+4. Elimina el juego de `videojuegos`
 
-The deletion order is mandatory — the junction tables have foreign keys pointing to `videojuegos.id`. Deleting the parent first would violate those constraints.
+El orden de eliminación es obligatorio — las tablas de unión tienen foreign keys apuntando a `videojuegos.id`. Eliminar el padre primero violaría esas restricciones.
 
 ---
 
-## Supabase Client Variants
+## Clientes de Supabase
 
-Three separate clients connect to the same Supabase project but handle cookies differently depending on the execution context.
+Tres clientes separados se conectan al mismo proyecto Supabase pero manejan cookies de forma diferente según el contexto de ejecución.
 
-### `lib/supabase/client.ts` — Browser client
+### `lib/supabase/client.ts` — Cliente del navegador
 ```ts
 import { createBrowserClient } from '@supabase/ssr'
 ```
-Used in **Client Components** (`'use client'`). Reads environment variables from the browser's process env. Suitable for real-time subscriptions or client-side queries; in this project, all data fetching happens server-side.
+Usado en **Client Components** (`'use client'`). Lee variables de entorno desde el proceso del navegador.
 
-### `lib/supabase/server.ts` — Server client
+### `lib/supabase/server.ts` — Cliente del servidor
 ```ts
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 ```
-Used in **Server Components, Server Actions, and Route Handlers**. Must be `async` because `cookies()` is async in Next.js 15+. The `setAll` implementation silently catches errors when called from a Server Component (where setting cookies is not allowed) — the middleware handles session refresh in those cases.
+Usado en **Server Components, Server Actions y Route Handlers**. Debe ser `async` porque `cookies()` es async en Next.js 15+. La implementación de `setAll` captura silenciosamente errores cuando se llama desde un Server Component (donde no se pueden establecer cookies) — el middleware se encarga de renovar la sesión en esos casos.
 
-### `lib/supabase/middleware.ts` — Middleware client
+### `lib/supabase/middleware.ts` — Cliente del middleware
 ```ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 ```
-Used exclusively inside `middleware.ts`. Runs in the **Edge Runtime**. Reads cookies from `NextRequest` and writes updated cookies to `NextResponse` so the session token is refreshed on every request before the page handler runs.
+Usado exclusivamente dentro de `middleware.ts`. Corre en el **Edge Runtime**. Lee cookies del `NextRequest` y escribe cookies actualizadas en el `NextResponse` para que el token de sesión se renueve en cada request antes de que se ejecute el handler de la página.
 
 ---
 
-## Data Flow: Catalog Query
+## Flujo de Datos: Consulta del Catálogo
 
-How a request for `/?q=zelda&genero=3&plataforma=1&page=2` is processed:
+Cómo se procesa un request a `/?q=zelda&genero=3&plataforma=1&page=2`:
 
 ```
-Browser
+Navegador
   │
   ├─ middleware.ts
-  │    └─ updateSession() — refreshes cookie, validates user via getUser()
+  │    └─ updateSession() — renueva cookie, valida usuario vía getUser()
   │
   └─ (catalog)/page.tsx  [Server Component]
        │
        ├─ await searchParams  →  { q: 'zelda', genero: '3', plataforma: '1', page: '2' }
        │
-       ├─ Promise.all([generos, plataformas, anios])  ← populate filter dropdowns
+       ├─ fetchFilterOptions(supabase)  ← poblar dropdowns de filtros
+       │    └─ Promise.all([generos, plataformas, anios])
        │
-       ├─ Two-query junction filter:
+       ├─ fetchVideojuegos(supabase, params, 12)  ← consulta principal
        │    │
-       │    ├─ SELECT videojuego_id FROM videojuegos_generos WHERE genero_id = 3
-       │    │    → [12, 45, 78, ...]
+       │    ├─ fetchFilterIds() — filtro de tablas de unión (dos consultas):
+       │    │    ├─ SELECT videojuego_id FROM videojuegos_generos WHERE genero_id = 3
+       │    │    │    → [12, 45, 78, ...]
+       │    │    └─ SELECT videojuego_id FROM videojuegos_plataformas WHERE plataforma_id = 1
+       │    │         → intersección con lista anterior (lógica AND)
+       │    │         → filterIds = [45, 78, ...]
        │    │
-       │    └─ SELECT videojuego_id FROM videojuegos_plataformas WHERE plataforma_id = 1
-       │         → intersect with prior list (AND logic)
-       │         → filterIds = [45, 78, ...]
+       │    ├─ SELECT *, desarrolladores(*), videojuegos_generos(generos(*)), ...
+       │    │    FROM videojuegos
+       │    │    WHERE titulo ILIKE '%zelda%'
+       │    │      AND id IN (45, 78, ...)
+       │    │    ORDER BY titulo
+       │    │    RANGE 12..23   (página 2, PAGE_SIZE = 12)
+       │    │
+       │    └─ return { videojuegos, count, totalPages, currentPage, error }
        │
-       ├─ Main query:
-       │    SELECT *, desarrolladores(*), videojuegos_generos(generos(*)), ...
-       │    FROM videojuegos
-       │    WHERE titulo ILIKE '%zelda%'
-       │      AND id IN (45, 78, ...)
-       │    ORDER BY titulo
-       │    RANGE 12..23   (page 2, PAGE_SIZE = 12)
-       │
-       └─ Render:
-            SearchBar  (controlled, pre-filled from ?q)
-            FilterBar  (dropdowns pre-selected from ?genero, ?plataforma)
-            Grid of VideogameCard components
+       └─ Renderizar:
+            SearchBar  (controlado, prellenado desde ?q)
+            FilterBar  (dropdowns preseleccionados desde ?genero, ?plataforma, ?sort)
+            Cuadrícula de componentes VideogameCard
             Pagination (currentPage=2, totalPages=N)
 ```
 
-**Why the two-query approach?** Supabase PostgREST cannot filter by nested junction table columns with AND semantics across multiple relations in a single query. The app fetches matching IDs from each junction table, computes their intersection in application code, and applies `.in('id', filterIds)` on the main query.
+**¿Por qué el enfoque de dos consultas?** Supabase PostgREST no puede filtrar por columnas de tablas de unión anidadas con semántica AND a través de múltiples relaciones en una sola consulta. La app consulta los IDs que coinciden en cada tabla de unión, calcula su intersección en el código de la aplicación, y aplica `.in('id', filterIds)` en la consulta principal.
 
-If no games match the junction filter, `filterIds` is set to `[-1]` — a sentinel that guarantees the main query returns zero results without causing an error.
+Si ningún juego coincide con el filtro de unión, `filterIds` se establece en `[-1]` — un valor centinela que garantiza que la consulta principal retorne cero resultados sin causar un error.
 
 ---
 
-## Design System
+## Principios de Diseño (KISS / DRY)
 
-The visual theme is defined in `app/globals.css` using Tailwind v4's `@theme inline` directive. There is no `tailwind.config.js` — all tokens are CSS custom properties.
+El proyecto sigue los principios **KISS** (Keep It Simple, Stupid) y **DRY** (Don't Repeat Yourself):
 
-### Color Palette
+### DRY — No te repitas
+- **`lib/queries.ts`**: La lógica de consulta (filtros, ordenamiento, paginación) está centralizada en funciones reutilizables (`fetchFilterOptions`, `fetchFilterIds`, `fetchVideojuegos`). Tanto la página del catálogo como la de admin usan las mismas funciones, variando solo el tamaño de página.
+- **`lib/types.ts`**: Los tipos TypeScript se definen una sola vez y se importan en todo el proyecto.
+- **`VideogameForm`**: Un solo componente de formulario sirve para crear y editar juegos, controlado por la presencia de `defaultValues`.
+- **`FilterBar`**: Un solo componente maneja filtros en catálogo y admin, con el prop `showSort` para habilitar el dropdown de orden.
 
-| Token | Value | Usage |
+### KISS — Mantenlo simple
+- **Estado basado en URL**: En vez de usar Redux, Context, o Zustand, todos los filtros, búsqueda y paginación viven en los parámetros de la URL. Esto simplifica el estado, habilita compartir URLs con filtros, y funciona con el botón atrás del navegador.
+- **Server Components por defecto**: Solo se usan Client Components donde se necesita interactividad (formularios, filtros). La obtención de datos se hace del lado del servidor.
+- **Sin abstracciones innecesarias**: Las Server Actions están en un solo archivo (`actions.ts`). Los clientes de Supabase son funciones simples. No hay capas de servicios o repositorios intermedios.
+- **Convenciones de Next.js**: Se aprovechan Route Groups, layouts anidados, `loading.tsx` y `error.tsx` del framework en vez de construir soluciones propias.
+
+---
+
+## Sistema de Diseño Visual
+
+El tema visual se define en `app/globals.css` usando la directiva `@theme inline` de Tailwind v4. No hay `tailwind.config.js` — todos los tokens son propiedades CSS personalizadas.
+
+### Paleta de Colores
+
+| Token | Valor | Uso |
 |---|---|---|
-| `--color-background` | `#0a0a0a` | Page background |
-| `--color-surface` | `#111111` | Card surfaces, navbar |
-| `--color-surface-elevated` | `#1a1a1a` | Elevated cards, table rows |
-| `--color-olive` | `#4a7c59` | Primary olive green |
-| `--color-olive-dark` | `#2d5a3d` | Buttons, active borders |
-| `--color-olive-light` | `#6b9e7a` | Hover states, links |
-| `--color-accent` | `#00ff41` | Neon green — scores, logo, headings |
-| `--color-text-primary` | `#e8e8e8` | Main body text |
-| `--color-text-secondary` | `#a0a0a0` | Secondary / label text |
-| `--color-text-muted` | `#606060` | Placeholders, disabled states |
-| `--color-border-custom` | `#2a2a2a` | All borders |
-| `--color-danger` | `#ff4444` | Errors, delete actions, low score |
-| `--color-warning` | `#ffaa00` | Mid-range score |
+| `--color-background` | `#0a0a0a` | Fondo de página |
+| `--color-surface` | `#111111` | Superficies de tarjetas, navbar |
+| `--color-surface-elevated` | `#1a1a1a` | Tarjetas elevadas, filas de tabla |
+| `--color-olive` | `#4a7c59` | Verde oliva principal |
+| `--color-olive-dark` | `#2d5a3d` | Botones, bordes activos |
+| `--color-olive-light` | `#6b9e7a` | Estados hover, enlaces |
+| `--color-accent` | `#00ff41` | Verde neón — puntuaciones, logo, títulos |
+| `--color-text-primary` | `#e8e8e8` | Texto principal |
+| `--color-text-secondary` | `#a0a0a0` | Texto secundario / etiquetas |
+| `--color-text-muted` | `#606060` | Placeholders, estados deshabilitados |
+| `--color-border-custom` | `#2a2a2a` | Todos los bordes |
+| `--color-danger` | `#ff4444` | Errores, acciones de eliminar, puntuación baja |
+| `--color-warning` | `#ffaa00` | Puntuación media |
 
-### CSS Effects
+### Efectos CSS
 
-- **`grid-pattern`** — subtle grid overlay on page backgrounds via CSS `background-image` with `linear-gradient`. Creates the tactical map aesthetic throughout the app.
+- **`grid-pattern`** — overlay sutil de cuadrícula en fondos de página vía CSS `background-image` con `linear-gradient`. Crea la estética de mapa táctico en toda la app.
 
-### Typography
+### Tipografía
 
-All UI text uses **Geist Mono** (`font-mono`) for headings, labels, scores, and buttons — reinforcing the terminal / tactical aesthetic. Body content uses Geist Sans. Both fonts are loaded via `next/font/google` in `app/layout.tsx`.
+Todo el texto de la UI usa **Geist Mono** (`font-mono`) para títulos, etiquetas, puntuaciones y botones — reforzando la estética de terminal / táctico. El contenido del cuerpo usa Geist Sans. Ambas fuentes se cargan vía `next/font/google` en `app/layout.tsx`.

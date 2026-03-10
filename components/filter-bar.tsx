@@ -87,7 +87,6 @@ export function FilterBar({
         ))}
       </select>
 
-      {/* Sort dropdown — only shown when showSort=true (admin panel) */}
       {showSort && (
         <select
           value={searchParams.get('sort') ?? ''}
