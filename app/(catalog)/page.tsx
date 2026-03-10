@@ -97,7 +97,7 @@ export default async function CatalogPage({
     <>
       <div className="mb-8">
         <h1 className="font-mono text-3xl font-bold uppercase tracking-widest text-text-primary">
-          Catalog
+          Videogames Catalog
         </h1>
         <p className="mt-1 text-sm text-text-secondary">
           Browse the tactical library. {count ?? 0} titles found.
@@ -123,7 +123,7 @@ export default async function CatalogPage({
 
       {videojuegos?.length === 0 && !error && (
         <p className="py-16 text-center text-text-muted">
-          No games found matching your criteria.
+          No games found in mother base.
         </p>
       )}
 

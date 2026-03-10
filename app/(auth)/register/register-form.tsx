@@ -58,7 +58,7 @@ export function RegisterForm() {
         disabled={pending}
         className="w-full rounded border border-olive-dark bg-olive-dark px-6 py-3 font-mono text-sm uppercase tracking-widest text-text-primary transition-colors hover:bg-olive disabled:opacity-50"
       >
-        {pending ? 'Registering...' : 'Create Account'}
+        {pending ? 'You are preparing for the mission...' : 'Create Account'}
       </button>
 
       <p className="text-center text-sm text-text-muted">

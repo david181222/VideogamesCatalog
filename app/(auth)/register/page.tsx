@@ -5,10 +5,10 @@ export default function RegisterPage() {
     <div className="rounded border border-border-custom bg-surface-elevated p-8">
       <div className="mb-8 text-center">
         <h1 className="font-mono text-2xl font-bold uppercase tracking-widest text-accent">
-          New Recruit
+          Kept You Waiting, Huh?
         </h1>
         <p className="mt-2 text-sm text-text-muted">
-          Create your account to join the operation
+          Can you hear Major Tom?, create your account to join the operation
         </p>
       </div>
       <RegisterForm />

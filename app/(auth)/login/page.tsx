@@ -8,7 +8,7 @@ export default function LoginPage() {
           Tactical Access
         </h1>
         <p className="mt-2 text-sm text-text-muted">
-          Authenticate to access the catalog
+          Authenticate to access Outer Heaven
         </p>
       </div>
       <LoginForm />
