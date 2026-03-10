@@ -1,26 +1,109 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* MGS3 Snake Eater -- Base Palette */
+  --background: #0a0a0a;
+  --foreground: #c8c8c8;
+  --surface: #141414;
+  --surface-elevated: #1a1a1a;
+  --border: #2a2a2a;
+
+  /* Olive / Military Greens */
+  --olive-darkest: #1a3a25;
+  --olive-dark: #2d5a3d;
+  --olive: #4a7c59;
+  --olive-light: #5a9a6a;
+
+  /* Tactical Accent */
+  --accent: #00ff41;
+  --accent-muted: #00cc33;
+  --accent-dim: #009922;
+
+  /* Status */
+  --danger: #cc3333;
+  --danger-hover: #aa2222;
+  --warning: #cc8833;
+
+  /* Text Variants */
+  --text-primary: #e0e0e0;
+  --text-secondary: #888888;
+  --text-muted: #555555;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border-custom: var(--border);
+
+  --color-olive-darkest: var(--olive-darkest);
+  --color-olive-dark: var(--olive-dark);
+  --color-olive: var(--olive);
+  --color-olive-light: var(--olive-light);
+
+  --color-accent: var(--accent);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-dim: var(--accent-dim);
+
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-warning: var(--warning);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Tactical scanline overlay */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Grid pattern background */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(74, 124, 89, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 124, 89, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Score highlight glow */
+.score-glow {
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--olive-dark);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--olive);
 }
