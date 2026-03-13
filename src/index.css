@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+:root {
+  /* Base — ink-washed paper & deep shadow */
+  --background:        #0d1209;
+  --foreground:        #c8c3a5;
+  --surface:           #131b0f;
+  --surface-elevated:  #1c2718;
+  --border:            #2b3a22;
+
+  /* Olive / Military Greens */
+  --olive-darkest:     #1e3018;
+  --olive-dark:        #354e26;
+  --olive:             #526840;
+  --olive-light:       #7a9458;
+  --olive-mist:        #a8bc8e;
+
+  /* Shinkawa Signature — yellow-green watercolor splash */
+  --accent:            #a8c23a;
+  --accent-muted:      #8aa030;
+  --accent-dim:        #697c24;
+  --accent-glow:       rgba(168, 194, 58, 0.35);
+
+  /* Warm Earth / Khaki */
+  --khaki:             #9a8b60;
+  --khaki-light:       #c4b082;
+  --khaki-dark:        #6a5e3e;
+
+  /* Ink Shadow */
+  --ink:               #090d07;
+  --ink-wash:          rgba(9, 13, 7, 0.72);
+
+  /* Status */
+  --danger:            #b84040;
+  --danger-hover:      #963232;
+  --warning:           #c4903a;
+
+  /* Text */
+  --text-primary:      #ddd8be;
+  --text-secondary:    #8a8670;
+  --text-muted:        #524e40;
+}
+
+@theme inline {
+  --color-background:       var(--background);
+  --color-foreground:       var(--foreground);
+  --color-surface:          var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border-custom:    var(--border);
+
+  --color-olive-darkest:    var(--olive-darkest);
+  --color-olive-dark:       var(--olive-dark);
+  --color-olive:            var(--olive);
+  --color-olive-light:      var(--olive-light);
+  --color-olive-mist:       var(--olive-mist);
+
+  --color-accent:           var(--accent);
+  --color-accent-muted:     var(--accent-muted);
+  --color-accent-dim:       var(--accent-dim);
+
+  --color-khaki:            var(--khaki);
+  --color-khaki-light:      var(--khaki-light);
+  --color-khaki-dark:       var(--khaki-dark);
+
+  --color-ink:              var(--ink);
+
+  --color-danger:           var(--danger);
+  --color-danger-hover:     var(--danger-hover);
+  --color-warning:          var(--warning);
+
+  --color-text-primary:     var(--text-primary);
+  --color-text-secondary:   var(--text-secondary);
+  --color-text-muted:       var(--text-muted);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, sans-serif;
+}
+
+/* Tactical scanline overlay */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.018) 3px,
+    rgba(0, 0, 0, 0.018) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Ink-wash noise texture */
+.ink-grain { position: relative; }
+.ink-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  z-index: 1;
+}
+
+/* Grid pattern */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(82, 104, 64, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(82, 104, 64, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Accent score glow */
+.score-glow {
+  text-shadow:
+    0 0 6px var(--accent-glow),
+    0 0 18px rgba(168, 194, 58, 0.18);
+}
+
+/* Ink-wash card */
+.surface-card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 1px 0 rgba(168, 194, 58, 0.06) inset,
+    0 4px 24px rgba(9, 13, 7, 0.6);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: var(--ink); }
+::-webkit-scrollbar-thumb { background: var(--olive-dark); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--olive); }
