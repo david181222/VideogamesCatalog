@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
-import InlineAddField from './InlineAddField'
+import InlineAddField from '../../components/InlineAddField'
 import Input from '../../components/Input'
 import Button from '../../components/Button'
+import ErrorMessage from '../../components/ErrorMessage'
 
 const selectClass =
   'w-full bg-surface border border-border-custom text-text-primary rounded px-3 py-2 placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent'
@@ -132,11 +133,7 @@ export default function GameForm() {
         {isEditing ? 'Editar Videojuego' : 'Nuevo Videojuego'}
       </h1>
 
-      {error && (
-        <div className="bg-danger/20 border border-danger/40 text-danger px-4 py-2 rounded mb-4 text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorMessage error={error} />
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input

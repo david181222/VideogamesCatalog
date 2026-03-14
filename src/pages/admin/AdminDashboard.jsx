@@ -4,6 +4,8 @@ import { supabase } from '../../lib/supabaseClient'
 import { useGameFilters } from '../../hooks/useGameFilters'
 import GameFilters from '../../components/GameFilters'
 import ConfirmModal from '../../components/ConfirmModal'
+import ErrorMessage from '../../components/ErrorMessage'
+import Spinner from '../../components/Spinner'
 
 export default function AdminDashboard() {
   const { games, loading, error: fetchError, filterProps, refetch } = useGameFilters()
@@ -55,15 +57,11 @@ export default function AdminDashboard() {
       {/* Mismos filtros que el catálogo de usuario */}
       <GameFilters {...filterProps} />
 
-      {error && (
-        <div className="bg-danger/20 border border-danger/40 text-danger px-4 py-2 rounded mb-4 text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorMessage error={error} />
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+          <Spinner />
         </div>
       ) : games.length === 0 ? (
         <p className="text-center text-text-muted py-16">No hay videojuegos que coincidan.</p>

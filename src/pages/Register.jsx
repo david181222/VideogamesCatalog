@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuthForm } from '../hooks/useAuthForm'
 import Input from '../components/Input'
 import Button from '../components/Button'
+import ErrorMessage from '../components/ErrorMessage'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -20,11 +21,7 @@ export default function Register() {
         </h1>
         <p className="text-center text-text-muted text-sm mb-6">Snake eater</p>
 
-        {error && (
-          <div className="bg-danger/20 border border-danger/40 text-danger px-4 py-2 rounded mb-4 text-sm">
-            {error}
-          </div>
-        )}
+        <ErrorMessage error={error} />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input

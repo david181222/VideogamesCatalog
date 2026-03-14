@@ -1,6 +1,8 @@
 import { useGameFilters } from '../hooks/useGameFilters'
 import GameCard from '../components/GameCard'
 import GameFilters from '../components/GameFilters'
+import ErrorMessage from '../components/ErrorMessage'
+import Spinner from '../components/Spinner'
 
 export default function Catalog() {
   const { games, loading, error, filterProps } = useGameFilters()
@@ -13,15 +15,11 @@ export default function Catalog() {
 
       <GameFilters {...filterProps} />
 
-      {error && (
-        <div className="bg-danger/20 border border-danger/40 text-danger px-4 py-2 rounded mb-4 text-sm">
-          {error}
-        </div>
-      )}
+      <ErrorMessage error={error} />
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+          <Spinner />
         </div>
       ) : games.length === 0 ? (
         <p className="text-center text-text-muted py-16">No se encontraron videjuegos.</p>
