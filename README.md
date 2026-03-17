@@ -193,20 +193,23 @@ Al recibir la función de autenticación como parámetro es reutilizable tanto p
 ### `useGameFilters.js`
 
 ```
-useGameFilters() → { games, loading, error, filterProps, refetch }
+useGameFilters({ paginate?, pageSize? }) → { games, loading, error, filterProps, refetch, page, setPage, totalCount, pageSize }
 ```
 
-El hook más complejo del proyecto. Centraliza toda la lógica de consulta y filtrado de videojuegos:
+El hook más complejo del proyecto. Centraliza toda la lógica de consulta, filtrado y paginación de videojuegos:
 
 1. **Estado de filtros:** `search`, `generoId`, `plataformaId`, `anio`, `puntuacionMin`, `order`
 2. **Carga de opciones:** Al montar, consulta en paralelo las tablas `generos` y `plataformas` para poblar los selectores del formulario de filtros
 3. **Query dinámica a Supabase:** Construye la consulta a `videojuegos` aplicando solo los filtros activos, con resoluciones de relaciones N:M para género y plataforma
 4. **Debounce de 300ms:** La consulta espera 300ms después del último cambio antes de ejecutarse, evitando peticiones excesivas mientras el usuario escribe
 5. **Ordenamiento:** Soporta 6 criterios: título, puntuación y año, cada uno ascendente y descendente
+6. **Paginación server-side:** Cuando `paginate` es `true` (valor por defecto), aplica `.range()` y `{ count: 'exact' }` a la query de Supabase para traer únicamente los registros de la página activa. El tamaño de página se controla con el parámetro `pageSize` (por defecto `12`, elegido porque encaja limpio en el grid de 4, 3 o 2 columnas). Cuando `paginate` es `false`, trae todos los registros sin paginar (usado por `AdminDashboard`)
 
-El objeto `filterProps` que retorna agrupa todo el estado y los setters de filtros, de modo que `GameFilters` puede recibirlos con un solo spread (`{...filterProps}`). La función `refetch` permite forzar una recarga de la lista, usada por `AdminDashboard` tras eliminar un juego.
+Los setters de filtros son funciones envueltas que resetean la página a 0 en el mismo ciclo de render al cambiar cualquier filtro, aprovechando el batching de React 19 para evitar renders en cascada.
 
-**Usado por:** `Catalog`, `AdminDashboard`
+El objeto `filterProps` agrupa el estado y los setters de filtros para que `GameFilters` los reciba con un solo spread (`{...filterProps}`). La función `refetch` permite forzar una recarga, usada por `AdminDashboard` tras eliminar un juego.
+
+**Usado por:** `Catalog` (con paginación), `AdminDashboard` (sin paginación)
 
 ---
 
@@ -253,7 +256,7 @@ Botón reutilizable con sistema de variantes y tamaños controlado por props. Ac
 ---
 
 ### `Input.jsx`
-Campo de texto con label opcional integrado en un solo componente. Aplica el estilo del sistema de diseño de forma consistente. Acepta todos los atributos nativos de `<input>` vía spread.
+Campo de texto con label opcional integrado en un solo componente. El label está asociado al input mediante `htmlFor` / `id`: si el caller no pasa un `id` explícito, se genera uno automáticamente a partir del texto del label. Esto garantiza que al hacer clic en el label el foco va al campo, y que los lectores de pantalla los asocien correctamente. Acepta todos los atributos nativos de `<input>` vía spread.
 
 **Usado por:** `Login`, `Register`, `GameForm`
 
@@ -267,13 +270,14 @@ Contenedor modal base. Renderiza un overlay oscuro semitransparente a pantalla c
 ---
 
 ### `ConfirmModal.jsx`
-Modal de confirmación para acciones destructivas. Compone `Modal` con un párrafo de texto y dos botones: `Cancelar` y `Eliminar`.
+Modal de confirmación para acciones destructivas. Compone `Modal` con un párrafo de texto y dos botones: `Cancelar` y el botón de confirmación.
 
-| Prop | Descripción |
-|---|---|
-| `message` | Texto de la pregunta de confirmación |
-| `onConfirm` | Función que se ejecuta al presionar "Eliminar" |
-| `onCancel` | Función que se ejecuta al presionar "Cancelar" |
+| Prop | Descripción | Por defecto |
+|---|---|---|
+| `message` | Texto de la pregunta de confirmación | — |
+| `onConfirm` | Función que se ejecuta al confirmar | — |
+| `onCancel` | Función que se ejecuta al cancelar | — |
+| `confirmLabel` | Texto del botón de confirmación | `'Eliminar'` |
 
 **Depende de:** `Modal`, `Button`
 **Usado por:** `AdminDashboard`
@@ -283,11 +287,11 @@ Modal de confirmación para acciones destructivas. Compone `Modal` con un párra
 ### `GameCard.jsx`
 Tarjeta visual de presentación de un videojuego en el catálogo. Recibe el objeto `game` tal como lo retorna Supabase y muestra:
 
-- Imagen de portada (placeholder si no hay URL)
+- Imagen de portada (placeholder si no hay URL o si la URL falla al cargar)
 - Título, nombre del desarrollador y año de lanzamiento
 - Puntuación con efecto de brillo si tiene valor asignado
-- Etiquetas de géneros (color oliva)
-- Etiquetas de plataformas (color khaki)
+- Etiquetas de géneros (color oliva) — usan el `id` del género como `key` de React
+- Etiquetas de plataformas (color khaki) — usan el `id` de la plataforma como `key` de React
 
 **Usado por:** `Catalog`
 
@@ -348,14 +352,16 @@ Formulario de registro de nueva cuenta. Estructura idéntica a `Login` pero usa 
 ---
 
 ### `Catalog.jsx`
-Vista principal del catálogo para usuarios autenticados. Muestra la barra de filtros sobre un grid responsivo de `GameCard`. Usa `useGameFilters` para toda la lógica de datos. Mientras carga muestra un `Spinner` centrado; si no hay resultados muestra un mensaje de texto.
+Vista principal del catálogo para usuarios autenticados. Muestra la barra de filtros sobre un grid responsivo de `GameCard`. Usa `useGameFilters` (con paginación activa) para toda la lógica de datos. Mientras carga muestra un `Spinner` centrado; si no hay resultados muestra un mensaje de texto.
+
+Al pie del grid aparece la paginación numerada cuando el total de resultados supera los 12 juegos por página: botones `←` y `→` para avanzar de a una página, y botones numerados que muestran siempre la primera y la última página más las dos adyacentes a la activa, con `…` como separador cuando hay saltos. La página activa se resalta con el color de acento del tema.
 
 **Depende de:** `useGameFilters`, `GameCard`, `GameFilters`, `ErrorMessage`, `Spinner`
 
 ---
 
 ### `AdminDashboard.jsx`
-Panel de control exclusivo para administradores. Muestra los videojuegos en una tabla con columnas de título, desarrollador, año y puntuación, con botones de editar y eliminar en cada fila. Reutiliza los mismos filtros del catálogo a través de `useGameFilters`. Al eliminar un juego abre un `ConfirmModal` y ejecuta las borras en orden estricto: primero `videojuegos_generos`, luego `videojuegos_plataformas` y finalmente `videojuegos`, respetando las restricciones de integridad referencial de la base de datos.
+Panel de control exclusivo para administradores. Muestra los videojuegos en una tabla con columnas de título, desarrollador, año y puntuación, con botones de editar y eliminar en cada fila. Reutiliza los mismos filtros del catálogo a través de `useGameFilters({ paginate: false })`, lo que trae todos los registros sin paginación para facilitar la gestión completa del inventario. Al eliminar un juego abre un `ConfirmModal` y ejecuta las borras en orden estricto: primero `videojuegos_generos`, luego `videojuegos_plataformas` y finalmente `videojuegos`, respetando las restricciones de integridad referencial de la base de datos.
 
 **Depende de:** `useGameFilters`, `GameFilters`, `ConfirmModal`, `ErrorMessage`, `Spinner`, `supabaseClient`
 

@@ -4,8 +4,8 @@ export default function GameCard({ game }) {
     desarrolladores, videojuegos_generos, videojuegos_plataformas,
   } = game
 
-  const generos = videojuegos_generos?.map((vg) => vg.generos?.nombre).filter(Boolean)
-  const plataformas = videojuegos_plataformas?.map((vp) => vp.plataformas?.nombre).filter(Boolean)
+  const generos = videojuegos_generos?.map((vg) => ({ id: vg.generos?.id, nombre: vg.generos?.nombre })).filter((g) => g.nombre)
+  const plataformas = videojuegos_plataformas?.map((vp) => ({ id: vp.plataformas?.id, nombre: vp.plataformas?.nombre })).filter((p) => p.nombre)
 
   return (
     <div className="surface-card rounded-lg overflow-hidden flex flex-col hover:border-olive transition-colors">
@@ -35,8 +35,8 @@ export default function GameCard({ game }) {
           {generos?.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {generos.map((g) => (
-                <span key={g} className="text-xs bg-olive-darkest text-olive-mist px-2 py-0.5 rounded border border-border-custom">
-                  {g}
+                <span key={g.id} className="text-xs bg-olive-darkest text-olive-mist px-2 py-0.5 rounded border border-border-custom">
+                  {g.nombre}
                 </span>
               ))}
             </div>
@@ -44,8 +44,8 @@ export default function GameCard({ game }) {
           {plataformas?.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {plataformas.map((p) => (
-                <span key={p} className="text-xs bg-surface text-khaki px-2 py-0.5 rounded border border-border-custom">
-                  {p}
+                <span key={p.id} className="text-xs bg-surface text-khaki px-2 py-0.5 rounded border border-border-custom">
+                  {p.nombre}
                 </span>
               ))}
             </div>

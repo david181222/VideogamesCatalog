@@ -95,11 +95,11 @@ export default function GameForm() {
     let gameId = id
 
     if (isEditing) {
-      const { error } = await supabase.from('videojuegos').update(gameData).eq('id', id)
-      if (error) { setError(error.message); setLoading(false); return }
+      const { error: updateError } = await supabase.from('videojuegos').update(gameData).eq('id', id)
+      if (updateError) { setError(updateError.message); setLoading(false); return }
     } else {
-      const { data, error } = await supabase.from('videojuegos').insert(gameData).select().single()
-      if (error) { setError(error.message); setLoading(false); return }
+      const { data, error: insertError } = await supabase.from('videojuegos').insert(gameData).select().single()
+      if (insertError) { setError(insertError.message); setLoading(false); return }
       gameId = data.id
     }
 
@@ -114,16 +114,17 @@ export default function GameForm() {
 
     if (selectedGeneros.length > 0) {
       const genRows = selectedGeneros.map((genero_id) => ({ videojuego_id: Number(gameId), genero_id }))
-      const { error } = await supabase.from('videojuegos_generos').insert(genRows)
-      if (error) { setError(error.message); setLoading(false); return }
+      const { error: genInsertErr } = await supabase.from('videojuegos_generos').insert(genRows)
+      if (genInsertErr) { setError(genInsertErr.message); setLoading(false); return }
     }
 
     if (selectedPlataformas.length > 0) {
       const platRows = selectedPlataformas.map((plataforma_id) => ({ videojuego_id: Number(gameId), plataforma_id }))
-      const { error } = await supabase.from('videojuegos_plataformas').insert(platRows)
-      if (error) { setError(error.message); setLoading(false); return }
+      const { error: platInsertErr } = await supabase.from('videojuegos_plataformas').insert(platRows)
+      if (platInsertErr) { setError(platInsertErr.message); setLoading(false); return }
     }
 
+    setLoading(false)
     navigate('/admin')
   }
 

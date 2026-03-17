@@ -11,14 +11,15 @@ export function useAuthForm(authFn, onSuccess) {
     setError(null)
     setLoading(true)
 
-    const { error } = await authFn({ email, password })
+    const { error: authError } = await authFn({ email, password })
 
-    if (error) {
-      setError(error.message)
+    if (authError) {
+      setError(authError.message)
       setLoading(false)
       return
     }
 
+    setLoading(false)
     onSuccess()
   }
 

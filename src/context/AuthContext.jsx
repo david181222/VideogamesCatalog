@@ -14,7 +14,8 @@ export function AuthProvider({ children }) {
       .select('role')
       .eq('id', userId)
       .single()
-    if (!error) setRole(data.role)
+    if (error) console.error('[AuthContext] Error al obtener el rol:', error.message)
+    else setRole(data.role)
     setLoading(false)
   }
 

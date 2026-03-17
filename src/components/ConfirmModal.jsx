@@ -1,7 +1,7 @@
 import Modal from './Modal'
 import Button from './Button'
 
-export default function ConfirmModal({ message, onConfirm, onCancel }) {
+export default function ConfirmModal({ message, onConfirm, onCancel, confirmLabel = 'Eliminar' }) {
   return (
     <Modal>
       <p className="text-text-primary mb-6">{message}</p>
@@ -10,7 +10,7 @@ export default function ConfirmModal({ message, onConfirm, onCancel }) {
           Cancelar
         </Button>
         <Button variant="danger" size="md" className="text-sm" onClick={onConfirm}>
-          Eliminar
+          {confirmLabel}
         </Button>
       </div>
     </Modal>

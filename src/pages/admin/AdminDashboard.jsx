@@ -8,7 +8,7 @@ import ErrorMessage from '../../components/ErrorMessage'
 import Spinner from '../../components/Spinner'
 
 export default function AdminDashboard() {
-  const { games, loading, error: fetchError, filterProps, refetch } = useGameFilters()
+  const { games, loading, error: fetchError, filterProps, refetch } = useGameFilters({ paginate: false })
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
 
