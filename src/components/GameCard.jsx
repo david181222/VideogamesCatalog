@@ -10,9 +10,13 @@ export default function GameCard({ game }) {
   return (
     <div className="surface-card rounded-lg overflow-hidden flex flex-col hover:border-olive transition-colors">
       <img
-        src={imagen_url || 'https://placehold.co/400x240/131b0f/526840?text=Sin+Imagen'}
+        src={imagen_url?.trim() ? imagen_url : '/assets/cj.webp'}
         alt={titulo}
         className="w-full h-48 object-cover"
+        onError={(e) => {
+          e.target.onerror = null       // evita loop infinito
+          e.target.src = '/assets/cj.webp'  // cae a CJ si la URL falla
+        }}
       />
       <div className="p-4 flex flex-col flex-1">
         <h3 className="text-base font-semibold text-text-primary mb-1 leading-snug">{titulo}</h3>
